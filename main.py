@@ -2,13 +2,11 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import heapq
-import time
-import HeapVisualizer
-import heapq
-import time
+import tkinter as tk
+from tkinter import ttk
 
-# Load CSV
-file_path = 'data/BooksDataset.csv'
+# Load the CSV file
+file_path = 'data/BooksDataset_copy.csv'
 data = pd.read_csv(file_path)
 
 # Preprocess columns
@@ -21,108 +19,117 @@ tfidf_matrix = tfidf_vectorizer.fit_transform(data['text'])
 # Function to find similar books
 def find_similar_books(query, top_n=10):
     query_vector = tfidf_vectorizer.transform([query])
-    
     similarity_scores = cosine_similarity(query_vector, tfidf_matrix).flatten()
-    
     top_indices = similarity_scores.argsort()[-top_n:][::-1]
-    
-    similar_books = data.iloc[top_indices]
+    similar_books = data.iloc[top_indices].copy()
     similar_books['similarity'] = similarity_scores[top_indices]
-    
-    similar_books = similar_books[similar_books['similarity'] > 0]
-    
-    return similar_books[['Title', 'Authors', 'similarity']]
+    return similar_books[similar_books['similarity'] > 0][['Title', 'Authors', 'similarity']]
 
 # Create a max heap from the similar books data
 def create_max_heap(similar_books):
     max_heap = []
     for _, row in similar_books.iterrows():
-        similarity = row['similarity']
-        title = row['Title']
-        # Store negative similarity to create a max heap with heapq (min heap by default)
-        heapq.heappush(max_heap, (-similarity, title))
+        heapq.heappush(max_heap, (-row['similarity'], row['Title']))
     return max_heap
 
-# BFS search
-def bfs_search(heap, target):
-    queue = heap[:]
-    start_time = time.time()
-    while queue:
-        similarity, title = queue.pop(0)
-        if title == target:
-            return time.time() - start_time, title
-    return time.time() - start_time, None
+# Draw the heap on a tkinter canvas
+def draw_heap(canvas, heap, x, y, index=0, offset=200, level=0):
+    if index >= len(heap):
+        return
 
+    similarity, title = heap[index]
+    similarity = -similarity
+    node_text = f"{title}\n({similarity:.2f})"
 
-def print_heap(heap):
-    for _, row in heap:
-        print(row)
+    # Draw the node
+    node_id = canvas.create_oval(x - 30, y - 30, x + 30, y + 30, fill="lightblue", tags=f"node_{index}")
+    text_id = canvas.create_text(x, y, text=node_text, font=("Arial", 10), fill="black", tags=f"text_{index}")
 
-def max_heap_to_ordered_list(max_heap):
-    # Convert max heap to ordered list by extracting nodes, sorting by negative similarity
-    ordered_list = []
+    # Add hover functionality
+    def on_enter(event):
+        canvas.itemconfig(node_id, fill="yellow")
+        canvas.itemconfig(text_id, fill="blue")
 
-    # Pop elements from the heap while keeping track of the similarity and title
-    while max_heap:
-        similarity, title = heapq.heappop(max_heap)
-        ordered_list.append((title, -similarity))
+    def on_leave(event):
+        canvas.itemconfig(node_id, fill="lightblue")
+        canvas.itemconfig(text_id, fill="black")
 
-    return ordered_list
+    canvas.tag_bind(f"node_{index}", "<Enter>", on_enter)
+    canvas.tag_bind(f"node_{index}", "<Leave>", on_leave)
 
-# DFS search
-def dfs_search(heap, target):
-    stack = heap[:]
-    start_time = time.time()
-    while stack:
-        similarity, title = stack.pop()
-        if title == target:
-            return time.time() - start_time, title
-    return time.time() - start_time, None
+    left_child_idx = 2 * index + 1
+    right_child_idx = 2 * index + 2
 
+    # Draw left child
+    if left_child_idx < len(heap):
+        child_x = x - offset
+        child_y = y + 100
+        canvas.create_line(x, y + 30, child_x, child_y - 30)
+        draw_heap(canvas, heap, child_x, child_y, left_child_idx, offset // 2, level + 1)
+
+    # Draw right child
+    if right_child_idx < len(heap):
+        child_x = x + offset
+        child_y = y + 100
+        canvas.create_line(x, y + 30, child_x, child_y - 30)
+        draw_heap(canvas, heap, child_x, child_y, right_child_idx, offset // 2, level + 1)
+
+# Main GUI application
 def main():
-    # Get user input
-    user_query = input("Enter a book title, author, description, or category to find similar books: ")
+    def search_books():
+        query = query_entry.get()
+        top_n = int(top_n_spinbox.get())
 
-    # Find similar books
-    similar_books = find_similar_books(user_query)
+        similar_books = find_similar_books(query, top_n)
+        max_heap = create_max_heap(similar_books)
 
-    # Create max heap
-    max_heap = create_max_heap(similar_books)
+        # Clear previous canvas content
+        canvas.delete("all")
 
-    # Display sorted heap
-    sorted_books = sorted(max_heap, key=lambda x: x[0])
-    print("Sorted Top Books:")
-    for similarity, title in sorted_books:
-        print(f"{title} - Similarity Score = {-similarity:.2f}")
+        # Draw the new heap
+        canvas_width = canvas.winfo_width()
+        draw_heap(canvas, max_heap, canvas_width // 2, 50)
 
-    # Validate top of the heap
-    if max_heap:
-        top_sim = -max_heap[0][0]
-        top_title = max_heap[0][1]
-        print(f"\nTop of Heap: {top_title} - Similarity Score = {top_sim:.2f}")
+        # Display similar books in the treeview
+        for row in tree.get_children():
+            tree.delete(row)
 
-    # Interactive Tree Plot
-    visualizer = HeapVisualizer.MaxHeapVisualizer(max_heap)  # Pass the max heap, not similar_books
-    visualizer.run()
+        for similarity, title in max_heap:
+            similarity = -similarity
+            tree.insert("", "end", values=(title, f"{similarity:.2f}"))
 
-    # Allow user to search for a node
-    try:
-        search_line_number = int(input("Enter the line number of the book to search in the graph: ")) - 1
-        if 0 <= search_line_number < len(max_heap):
-            target_node = max_heap[search_line_number][1]
+    # Create the main tkinter window
+    root = tk.Tk()
+    root.title("Book Similarity and Heap Visualization")
 
-            # Perform BFS and DFS
-            bfs_time, bfs_result = bfs_search(max_heap, target_node)
-            dfs_time, dfs_result = dfs_search(max_heap, target_node)
+    # Query input
+    query_label = tk.Label(root, text="Search Query:")
+    query_label.pack(pady=5)
+    query_entry = tk.Entry(root, width=50)
+    query_entry.pack(pady=5)
 
-            # Display results
-            print(f"Target Node: {target_node}")
-            print(f"BFS found the node in {bfs_time:.6f} seconds.")
-            print(f"DFS found the node in {dfs_time:.6f} seconds.")
-        else:
-            print("Invalid line number.")
-    except ValueError:
-        print("Please enter a valid number.")
+    # Top N results input
+    top_n_label = tk.Label(root, text="Number of Top Results:")
+    top_n_label.pack(pady=5)
+    top_n_spinbox = tk.Spinbox(root, from_=1, to=50, width=5)
+    top_n_spinbox.pack(pady=5)
+
+    # Search button
+    search_button = tk.Button(root, text="Search", command=search_books)
+    search_button.pack(pady=10)
+
+    # Treeview to display results
+    tree = ttk.Treeview(root, columns=("Title", "Similarity"), show="headings")
+    tree.heading("Title", text="Title")
+    tree.heading("Similarity", text="Similarity")
+    tree.pack(pady=10, fill=tk.BOTH, expand=True)
+
+    # Canvas for heap visualization
+    canvas = tk.Canvas(root, width=800, height=600, bg="white")
+    canvas.pack(pady=10, fill=tk.BOTH, expand=True)
+
+    # Run the tkinter event loop
+    root.mainloop()
 
 if __name__ == "__main__":
     main()
