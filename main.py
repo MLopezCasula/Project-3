@@ -3,7 +3,6 @@ from tkinter import ttk
 from data import find_similar_books
 from heap import create_max_heap, draw_heap
 
-
 # Main GUI application
 def main():
     def search_books():
@@ -28,6 +27,16 @@ def main():
             similarity = -similarity
             tree.insert("", "end", values=(title, f"{similarity:.2f}"))
 
+    def perform_bfs():
+        tree.insert("", "end", values=("BFS Result Placeholder", "N/A"))
+        canvas.delete("all")
+        canvas.create_text(500, 300, text="BFS Visualization Placeholder", font=("Arial", 16))
+
+    def perform_dfs():
+        tree.insert("", "end", values=("DFS Result Placeholder", "N/A"))
+        canvas.delete("all")
+        canvas.create_text(500, 300, text="DFS Visualization Placeholder", font=("Arial", 16))
+
     # Create the main tkinter window
     root = tk.Tk()
     root.title("Book Similarity and Heap Visualization")
@@ -44,9 +53,21 @@ def main():
     top_n_spinbox = tk.Spinbox(root, from_=1, to=50, width=5)
     top_n_spinbox.pack(pady=5)
 
+    # Buttons frame
+    button_frame = tk.Frame(root)
+    button_frame.pack(pady=10)
+
     # Search button
-    search_button = tk.Button(root, text="Search", command=search_books)
-    search_button.pack(pady=10)
+    search_button = tk.Button(button_frame, text="Search", command=search_books)
+    search_button.pack(side=tk.LEFT, padx=5)
+
+    # BFS button
+    bfs_button = tk.Button(button_frame, text="BFS", command=perform_bfs)
+    bfs_button.pack(side=tk.LEFT, padx=5)
+
+    # DFS button
+    dfs_button = tk.Button(button_frame, text="DFS", command=perform_dfs)
+    dfs_button.pack(side=tk.LEFT, padx=5)
 
     # Treeview to display results
     tree = ttk.Treeview(root, columns=("Title", "Similarity"), show="headings", height=5)
