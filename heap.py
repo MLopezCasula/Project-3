@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import Toplevel
 import heapq
 import time
+from functools import partial
+
 
 
 # Handles hover interactions
@@ -147,7 +149,6 @@ def draw_heap_bfs(canvas, heap, x, y, index=0, offset=250, level=0, node_size=30
     canvas.after(delay + 2000, draw_left_child)
     canvas.after(delay + 4000, draw_right_child)
 
-
 def draw_heap_dfs(canvas, heap, x, y, index=0, offset=250, level=0, node_size=30, color="lightblue", delay=0):
     if index >= len(heap):
         return
@@ -169,27 +170,37 @@ def draw_heap_dfs(canvas, heap, x, y, index=0, offset=250, level=0, node_size=30
     vertical_offset = 60  # Vertical offset between levels
 
     # Calculate node size and offset dynamically based on level
-    current_node_size = max(5, node_size - 5)
-    current_offset = max((offset * 0.5 ** level) + (100 - (level * 40)), 10)
+    new_node_size = max(5, node_size - 5)
+    new_offset = max((offset * 0.5 ** level) + (100 - (level * 40)), 10)  # Offset decreases with level
 
     # Adjust offset based on specific levels if needed
     if level == 2:
-        current_offset -= 20
+        new_offset -= 20
     if level == 3:
-        current_offset += 15
+        new_offset += 15
 
     # Draw the left child first
     left_child_index = 2 * index + 1
     if left_child_index < len(heap):
-        child_x = x - current_offset
+        child_x = x - new_offset
         child_y = y + vertical_offset
-        canvas.create_line(x, y + node_size, child_x, child_y - current_node_size, width=2)
-        canvas.after(delay + 2000, lambda: draw_heap_dfs(canvas, heap, child_x, child_y, left_child_index, offset, level + 1, node_size, color, delay + 2000))
+        canvas.create_line(x, y + node_size, child_x, child_y - new_node_size, width=2)
+        canvas.after(
+            delay + 2000,
+            partial(
+                draw_heap_dfs, canvas, heap, child_x, child_y, left_child_index, new_offset, level + 1, new_node_size, color, delay + 2000
+            )
+        )
 
     # Draw the right child
     right_child_index = 2 * index + 2
     if right_child_index < len(heap):
-        child_x = x + current_offset
+        child_x = x + new_offset
         child_y = y + vertical_offset
-        canvas.create_line(x, y + node_size, child_x, child_y - current_node_size, width=2)
-        canvas.after(delay + 4000, lambda: draw_heap_dfs(canvas, heap, child_x, child_y, right_child_index, offset, level + 1, node_size, color, delay + 4000))
+        canvas.create_line(x, y + node_size, child_x, child_y - new_node_size, width=2)
+        canvas.after(
+            delay + 4000,
+            partial(
+                draw_heap_dfs, canvas, heap, child_x, child_y, right_child_index, new_offset, level + 1, new_node_size, color, delay + 4000
+            )
+        )
