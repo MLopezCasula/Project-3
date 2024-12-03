@@ -4,6 +4,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 import heapq
 import time
 import HeapVisualizer
+import heapq
+import time
+from dsplot.tree import BinaryTree  # Corrected import for DSPlot's BinaryTree
 
 # Load CSV
 file_path = 'data/BooksDataset.csv'
@@ -16,22 +19,20 @@ data['text'] = data[['Title', 'Authors', 'Description', 'Category']].fillna('').
 tfidf_vectorizer = TfidfVectorizer(stop_words='english')
 tfidf_matrix = tfidf_vectorizer.fit_transform(data['text'])
 
-
 # Function to find similar books
 def find_similar_books(query, top_n=30):
     query_vector = tfidf_vectorizer.transform([query])
-
+    
     similarity_scores = cosine_similarity(query_vector, tfidf_matrix).flatten()
-
+    
     top_indices = similarity_scores.argsort()[-top_n:][::-1]
-
+    
     similar_books = data.iloc[top_indices]
     similar_books['similarity'] = similarity_scores[top_indices]
-
+    
     similar_books = similar_books[similar_books['similarity'] > 0]
-
+    
     return similar_books[['Title', 'Authors', 'similarity']]
-
 
 # Create a max heap from the similar books data
 def create_max_heap(similar_books):
@@ -42,7 +43,6 @@ def create_max_heap(similar_books):
         # Store negative similarity to create a max heap with heapq (min heap by default)
         heapq.heappush(max_heap, (-similarity, title))
     return max_heap
-
 
 # BFS search
 def bfs_search(heap, target):
