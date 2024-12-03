@@ -1,16 +1,23 @@
 import tkinter as tk
 from tkinter import ttk
 from data import find_similar_books
-from heap import create_max_heap, draw_heap
+from heap import create_max_heap, draw_heap, draw_heap_dfs
+
+# Function to create the max heap
+def get_max_heap(query, top_n):
+    similar_books = find_similar_books(query, top_n)
+    return create_max_heap(similar_books)
 
 # Main GUI application
 def main():
+    max_heap = []  # Store the current heap globally for reuse
+
     def search_books():
+        nonlocal max_heap
         query = query_entry.get()
         top_n = int(top_n_spinbox.get())
 
-        similar_books = find_similar_books(query, top_n)
-        max_heap = create_max_heap(similar_books)
+        max_heap = get_max_heap(query, top_n)
 
         # Clear previous canvas content
         canvas.delete("all")
@@ -33,9 +40,12 @@ def main():
         canvas.create_text(500, 300, text="BFS Visualization Placeholder", font=("Arial", 16))
 
     def perform_dfs():
-        tree.insert("", "end", values=("DFS Result Placeholder", "N/A"))
+        if not max_heap:
+            tree.insert("", "end", values=("No data to visualize", "N/A"))
+            return
+
         canvas.delete("all")
-        canvas.create_text(500, 300, text="DFS Visualization Placeholder", font=("Arial", 16))
+        draw_heap_dfs(canvas, max_heap, canvas.winfo_width() // 2, 50)
 
     # Create the main tkinter window
     root = tk.Tk()

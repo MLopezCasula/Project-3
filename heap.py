@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import Toplevel
 import heapq
+import time
+
 
 # Handles hover interactions
 class ToolTip(object):
@@ -66,8 +68,14 @@ def draw_heap(canvas, heap, x, y, index=0, offset=250, level=0, node_size=30, co
 
     vertical_offset = 60
 
-    new_offset = max(offset * 0.5 ** level, 60)
-    new_node_size = max(20, node_size - 3)
+    new_offset = max((offset * 0.50 ** level) + (100 - (level*40)), 10)
+    new_node_size = max(5, node_size - 5)
+
+    if level == 2:
+        new_offset -= 20
+
+    if level == 3:
+        new_offset += 15
 
     # Draw child nodes recursively with adjusted horizontal offset
     left_child_index = 2 * index + 1
@@ -86,3 +94,61 @@ def draw_heap(canvas, heap, x, y, index=0, offset=250, level=0, node_size=30, co
         child_y = y + vertical_offset
         canvas.create_line(x, y + node_size, child_x, child_y - new_node_size, width=2)
         draw_heap(canvas, heap, child_x, child_y, right_child_index, new_offset, level + 1, new_node_size, color)
+
+def draw_heap_dfs(canvas, heap, x, y, index=0, offset=250, level=0, node_size=30, color="lightblue", delay=0):
+    if index >= len(heap):
+        return
+
+    similarity, title = heap[index]
+    similarity = -similarity
+    node_text = f"{title}\n({similarity:.2f})"
+
+    # Calculate node size and offset dynamically based on level
+    node_size = max(5, 30 - level * 5)  # Node size decreases as level increases
+    new_offset = max((offset * 0.5 ** level) + (100 - (level * 40)), 10)  # Offset decreases with level
+
+    # Adjust offset based on specific levels if needed
+    if level == 2:
+        new_offset -= 20
+    if level == 3:
+        new_offset += 15
+
+    # Draw the current node immediately
+    node_group = canvas.create_oval(x - node_size, y - node_size, x + node_size, y + node_size,
+                                    fill=color, outline="black", tags=f"node_{index}")
+
+    # Create the tooltip for the node
+    CreateToolTip(canvas, f"node_{index}", node_text, x, y)
+
+    # Ensure the canvas updates immediately after drawing the initial node
+    canvas.update()
+
+    vertical_offset = 60  # Vertical offset between levels
+
+    # Define delays for children nodes
+    left_child_delay = delay + 2000  # Delay for the left child
+    right_child_delay = left_child_delay + 2000  # Delay for the right child
+
+    # Draw the left child first
+    def draw_left_child():
+        left_child_index = 2 * index + 1
+        if left_child_index < len(heap):
+            child_x = x - new_offset
+            child_y = y + vertical_offset
+            canvas.create_line(x, y + node_size, child_x, child_y - node_size, width=2)
+            draw_heap_dfs(canvas, heap, child_x, child_y, left_child_index, new_offset, level + 1, node_size, color, left_child_delay)
+
+    # Draw the right child after the left one
+    def draw_right_child():
+        right_child_index = 2 * index + 2
+        if right_child_index < len(heap):
+            child_x = x + new_offset
+            child_y = y + vertical_offset
+            canvas.create_line(x, y + node_size, child_x, child_y - node_size, width=2)
+            draw_heap_dfs(canvas, heap, child_x, child_y, right_child_index, new_offset, level + 1, node_size, color, right_child_delay)
+
+    # First draw the left child, then draw the right child after
+    # Schedule the left child first
+    canvas.after(left_child_delay, draw_left_child)
+    # Schedule the right child only after the left child is finished
+    canvas.after(right_child_delay, draw_right_child)
