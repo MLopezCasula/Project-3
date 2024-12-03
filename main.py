@@ -52,6 +52,10 @@ def bfs_search(heap, target):
             return time.time() - start_time, title
     return time.time() - start_time, None
 
+def print_heap(heap):
+    for _, row in heap:
+        print(row)
+
 # DFS search
 def dfs_search(heap, target):
     stack = heap[:]
@@ -128,6 +132,8 @@ similar_books = find_similar_books(user_query)
 
 # Create max heap
 max_heap = create_max_heap(similar_books)
+
+print_heap(max_heap)
 
 # Display sorted heap
 sorted_books = sorted(max_heap, key=lambda x: x[0])
