@@ -6,7 +6,7 @@ import time
 from dsplot.tree import BinaryTree  # Corrected import for DSPlot's BinaryTree
 
 # Load CSV
-file_path = 'data/BooksDataset_copy.csv'
+file_path = 'data/BooksDataset.csv'
 data = pd.read_csv(file_path)
 
 # Preprocess columns
