@@ -1,7 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from data import find_similar_books
-from heap import create_max_heap, draw_heap, draw_heap_dfs
+from heap import create_max_heap, draw_heap, draw_heap_bfs, draw_heap_dfs
+
 
 # Function to create the max heap
 def get_max_heap(query, top_n):
@@ -34,11 +35,6 @@ def main():
             similarity = -similarity
             tree.insert("", "end", values=(title, f"{similarity:.2f}"))
 
-    def perform_bfs():
-        tree.insert("", "end", values=("BFS Result Placeholder", "N/A"))
-        canvas.delete("all")
-        canvas.create_text(500, 300, text="BFS Visualization Placeholder", font=("Arial", 16))
-
     def perform_dfs():
         if not max_heap:
             tree.insert("", "end", values=("No data to visualize", "N/A"))
@@ -46,6 +42,14 @@ def main():
 
         canvas.delete("all")
         draw_heap_dfs(canvas, max_heap, canvas.winfo_width() // 2, 50)
+
+    def perform_bfs():
+        if not max_heap:
+            tree.insert("", "end", values=("No data to visualize", "N/A"))
+            return
+
+        canvas.delete("all")
+        draw_heap_bfs(canvas, max_heap, canvas.winfo_width() // 2, 50)
 
     # Create the main tkinter window
     root = tk.Tk()
