@@ -103,15 +103,6 @@ def draw_heap_dfs(canvas, heap, x, y, index=0, offset=250, level=0, node_size=30
     similarity = -similarity
     node_text = f"{title}\n({similarity:.2f})"
 
-    # Calculate node size and offset dynamically based on level
-    node_size = max(5, 30 - level * 5)  # Node size decreases as level increases
-    new_offset = max((offset * 0.5 ** level) + (100 - (level * 40)), 10)  # Offset decreases with level
-
-    # Adjust offset based on specific levels if needed
-    if level == 2:
-        new_offset -= 20
-    if level == 3:
-        new_offset += 15
 
     # Draw the current node immediately
     node_group = canvas.create_oval(x - node_size, y - node_size, x + node_size, y + node_size,
@@ -129,14 +120,24 @@ def draw_heap_dfs(canvas, heap, x, y, index=0, offset=250, level=0, node_size=30
     left_child_delay = delay + 2000  # Delay for the left child
     right_child_delay = left_child_delay + 2000  # Delay for the right child
 
+    # Calculate node size and offset dynamically based on level
+    new_node_size = max(5, node_size - 5)
+    new_offset = max((offset * 0.5 ** level) + (100 - (level * 40)), 10)  # Offset decreases with level
+
+    # Adjust offset based on specific levels if needed
+    if level == 2:
+        new_offset -= 20
+    if level == 3:
+        new_offset += 15
+
     # Draw the left child first
     def draw_left_child():
         left_child_index = 2 * index + 1
         if left_child_index < len(heap):
             child_x = x - new_offset
             child_y = y + vertical_offset
-            canvas.create_line(x, y + node_size, child_x, child_y - node_size, width=2)
-            draw_heap_dfs(canvas, heap, child_x, child_y, left_child_index, new_offset, level + 1, node_size, color, left_child_delay)
+            canvas.create_line(x, y + node_size, child_x, child_y - new_node_size, width=2)
+            draw_heap_dfs(canvas, heap, child_x, child_y, left_child_index, new_offset, level + 1, new_node_size, color, left_child_delay)
 
     # Draw the right child after the left one
     def draw_right_child():
@@ -144,8 +145,8 @@ def draw_heap_dfs(canvas, heap, x, y, index=0, offset=250, level=0, node_size=30
         if right_child_index < len(heap):
             child_x = x + new_offset
             child_y = y + vertical_offset
-            canvas.create_line(x, y + node_size, child_x, child_y - node_size, width=2)
-            draw_heap_dfs(canvas, heap, child_x, child_y, right_child_index, new_offset, level + 1, node_size, color, right_child_delay)
+            canvas.create_line(x, y + node_size, child_x, child_y - new_node_size, width=2)
+            draw_heap_dfs(canvas, heap, child_x, child_y, right_child_index, new_offset, level + 1, new_node_size, color, right_child_delay)
 
     # First draw the left child, then draw the right child after
     # Schedule the left child first
