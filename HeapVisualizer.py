@@ -1,5 +1,6 @@
 import pygame
 import math
+import heapq  # Import heapq for heap operations
 
 # Initialize pygame
 pygame.init()
@@ -20,17 +21,31 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 
 
+class Node:
+    def __init__(self, similarity, title):
+        self.similarity = similarity
+        self.title = title
+
+
 class MaxHeapVisualizer:
-    def __init__(self, max_heap):
-        self.max_heap = max_heap  # Directly use the provided max_heap
+    def __init__(self, sorted_books):
+        # Create a max heap from sorted_books
+        self.max_heap = self.create_max_heap(sorted_books)  # Create max heap from sorted_books
         self.running = True
 
-    def draw_tree(self, nodes, screen, x, y, level=0, offset=225, max_depth=5):
+    def create_max_heap(self, sorted_books):
+        # Convert the sorted books to a max heap (using negative similarity values for max-heap simulation)
+        max_heap = []
+        for similarity, title in sorted_books:
+            heapq.heappush(max_heap, (-similarity, title))
+        return [Node(-similarity, title) for similarity, title in max_heap]  # Convert to Node objects
+
+    def draw_tree(self, nodes, screen, x, y, level=0, offset=225):
         if not nodes:
             return
 
         # Get the current node (root of the subtree)
-        value, title = nodes[0]
+        node = nodes[0]
 
         # Calculate node size based on depth (decreases as we go down)
         node_radius = max(10, 30 - (level * 3))
@@ -45,7 +60,7 @@ class MaxHeapVisualizer:
         distance = math.sqrt((mouse_x - x) ** 2 + (mouse_y - y) ** 2)
 
         # Draw the current node
-        node_text = font.render(f"{title}", True, BLUE)
+        node_text = font.render(f"{node.title}", True, BLUE)
         node_width = node_text.get_width()
 
         # Check if the mouse is over the node (within the circle)
@@ -57,17 +72,21 @@ class MaxHeapVisualizer:
         pygame.draw.circle(screen, RED, (x, y), node_radius)
 
         # Increase vertical spacing more significantly as we go deeper
-        next_y = y + 60 + (level * 30)
+        next_y = y + 75 + (level * 30)
+
+        # Calculate the index of the left and right children
+        left_index = 2 * level + 1
+        right_index = 2 * level + 2
 
         # If left child exists, draw it
-        if 2 * level + 1 < len(nodes):
+        if left_index < len(nodes):
             pygame.draw.line(screen, BLACK, (x, y + node_radius), (x - offset, next_y - node_radius), 2)
-            self.draw_tree(nodes[2 * level + 1:], screen, x - offset, next_y, level + 1, offset // 2, max_depth)
+            self.draw_tree(nodes[left_index:], screen, x - offset, next_y, level + 1, offset // 2)
 
         # If right child exists, draw it
-        if 2 * level + 2 < len(nodes):
+        if right_index < len(nodes):
             pygame.draw.line(screen, BLACK, (x, y + node_radius), (x + offset, next_y - node_radius), 2)
-            self.draw_tree(nodes[2 * level + 2:], screen, x + offset, next_y, level + 1, offset // 2, max_depth)
+            self.draw_tree(nodes[right_index:], screen, x + offset, next_y, level + 1, offset // 2)
 
     def visualize_max_heap(self):
         # Set background color
@@ -89,3 +108,4 @@ class MaxHeapVisualizer:
             self.visualize_max_heap()
 
         pygame.quit()
+

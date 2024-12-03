@@ -6,7 +6,6 @@ import time
 import HeapVisualizer
 import heapq
 import time
-from dsplot.tree import BinaryTree  # Corrected import for DSPlot's BinaryTree
 
 # Load CSV
 file_path = 'data/BooksDataset.csv'
@@ -20,7 +19,7 @@ tfidf_vectorizer = TfidfVectorizer(stop_words='english')
 tfidf_matrix = tfidf_vectorizer.fit_transform(data['text'])
 
 # Function to find similar books
-def find_similar_books(query, top_n=30):
+def find_similar_books(query, top_n=10):
     query_vector = tfidf_vectorizer.transform([query])
     
     similarity_scores = cosine_similarity(query_vector, tfidf_matrix).flatten()
@@ -59,6 +58,16 @@ def print_heap(heap):
     for _, row in heap:
         print(row)
 
+def max_heap_to_ordered_list(max_heap):
+    # Convert max heap to ordered list by extracting nodes, sorting by negative similarity
+    ordered_list = []
+
+    # Pop elements from the heap while keeping track of the similarity and title
+    while max_heap:
+        similarity, title = heapq.heappop(max_heap)
+        ordered_list.append((title, -similarity))
+
+    return ordered_list
 
 # DFS search
 def dfs_search(heap, target):
