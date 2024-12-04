@@ -2,11 +2,11 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Load the CSV file
+# Loading CSV file
 file_path = 'data/BooksDataset.csv'
 data = pd.read_csv(file_path)
 
-# Preprocess columns
+#  Columns
 data['text'] = data[['Title', 'Authors', 'Description', 'Category']].fillna('').agg(' '.join, axis=1)
 
 # Compute TF-IDF matrix

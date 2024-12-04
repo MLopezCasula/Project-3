@@ -1,11 +1,10 @@
+
 import tkinter as tk
 from tkinter import Toplevel
 import heapq
-from functools import partial
-from queue import Queue
+import time
 
-
-# Handles hover interactions
+# This handles hover interactions
 class ToolTip(object):
     def __init__(self, widget):
         self.widget = widget
@@ -16,7 +15,6 @@ class ToolTip(object):
         if self.tipwindow or not self.text:
             return
 
-        # Adjusts the position of the tooltip based on the canvas coordinates
         x = x + self.widget.winfo_rootx() + 10
         y = y + self.widget.winfo_rooty() + 10
 
@@ -51,112 +49,90 @@ def create_max_heap(similar_books):
         heapq.heappush(max_heap, (-row['similarity'], row['Title']))
     return max_heap
 
-# Draw the heap on a tkinter canvas
-def draw_heap(canvas, heap, x, y, index=0, offset=250, level=0, node_size=30, color="lightblue"):
-    if index >= len(heap):
+def draw_heap(canvas, heap, x, y, index=0, level=0, max_levels=5, node_size=20, color="orange"):
+    if index >= len(heap) or level >= max_levels:
         return
 
     similarity, title = heap[index]
     similarity = -similarity
     node_text = f"{title}\n({similarity:.2f})"
 
+    # This Calculates spacing
+    total_width = (2 ** max_levels) * node_size
+    horizontal_spacing = total_width / (2 ** (level + 1))
+
     # Draw the node
-    node_group = canvas.create_oval(x - node_size, y - node_size, x + node_size, y + node_size,
-                                    fill=color, outline="black", tags=f"node_{index}")
+    canvas.create_oval(
+        x - node_size, y - node_size, x + node_size, y + node_size,
+        fill=color, outline="black", tags=f"node_{index}"
+    )
 
     # Create the tooltip for the node
     CreateToolTip(canvas, f"node_{index}", node_text, x, y)
 
-    vertical_offset = 60
-
-    new_offset = max((offset * 0.50 ** level) + (100 - (level*40)), 10)
-    new_node_size = max(5, node_size - 5)
-
-    if level == 2:
-        new_offset -= 20
-
-    if level == 3:
-        new_offset += 15
-
-    # Draw child nodes recursively with adjusted horizontal offset
+    # Draw child nodes
+    vertical_spacing = 80
     left_child_index = 2 * index + 1
     right_child_index = 2 * index + 2
 
     # Left child
     if left_child_index < len(heap):
-        child_x = x - new_offset
-        child_y = y + vertical_offset
-        canvas.create_line(x, y + node_size, child_x, child_y - new_node_size, width=2)
-        draw_heap(canvas, heap, child_x, child_y, left_child_index, new_offset, level + 1, new_node_size, color)
+        child_x = x - horizontal_spacing
+        child_y = y + vertical_spacing
+        canvas.create_line(x, y + node_size, child_x, child_y - node_size, width=2, fill="black")
+        draw_heap(canvas, heap, child_x, child_y, left_child_index, level + 1, max_levels, node_size, color)
 
     # Right child
     if right_child_index < len(heap):
-        child_x = x + new_offset
-        child_y = y + vertical_offset
-        canvas.create_line(x, y + node_size, child_x, child_y - new_node_size, width=2)
-        draw_heap(canvas, heap, child_x, child_y, right_child_index, new_offset, level + 1, new_node_size, color)
+        child_x = x + horizontal_spacing
+        child_y = y + vertical_spacing
+        canvas.create_line(x, y + node_size, child_x, child_y - node_size, width=2, fill="black")
+        draw_heap(canvas, heap, child_x, child_y, right_child_index, level + 1, max_levels, node_size, color)
 
-def draw_heap_bfs(canvas, heap, x, y, node_size=30, color="lightblue", delay=0):
-    if not heap:
-        return
+def draw_heap_bfs(canvas, heap, x, y, delay=500, max_levels=5, node_size=20):
+    queue = [(x, y, 0, 0)] 
+    node_spacing = (2 ** max_levels) * node_size 
 
-    # BFS queue: stores (current index, x, y, level, offset)
-    q = Queue()
-    q.put((0, x, y, 0, 250))
-
-    vertical_offset = 60
-
-    new_node_size = node_size
-
-    while not q.empty():
-        index, curr_x, curr_y, level, offset = q.get()
-
-        if index >= len(heap):
+    while queue:
+        node_x, node_y, index, level = queue.pop(0)
+        if index >= len(heap) or level >= max_levels:
             continue
 
         similarity, title = heap[index]
         similarity = -similarity
         node_text = f"{title}\n({similarity:.2f})"
 
-        # Draw the current node
-        canvas.create_oval(curr_x - new_node_size, curr_y - new_node_size,
-                           curr_x + new_node_size, curr_y + new_node_size,
-                           fill=color, outline="black", tags=f"node_{index}")
+        # Draw the node
+        canvas.create_oval(
+            node_x - node_size, node_y - node_size, node_x + node_size, node_y + node_size,
+            fill="red", outline="black", tags=f"node_{index}"
+        )
 
-        # Create the tooltip for the node
-        CreateToolTip(canvas, f"node_{index}", node_text, curr_x, curr_y)
-
-        # Update the canvas immediately
-        canvas.update()
-        canvas.after(delay)
-
-        # Calculate new node size and offset
-        new_node_size = max(5, node_size - 5)
-        new_offset = max((offset * 0.5 ** level) + (100 - (level * 40)), 10)
-
-        if level == 2:
-            new_offset -= 20
-        if level == 3:
-            new_offset += 15
-
-        # Add left child to the queue
+        # Calculate child positions
+        horizontal_spacing = node_spacing / (2 ** (level + 1))
+        vertical_spacing = 80
         left_child_index = 2 * index + 1
-        if left_child_index < len(heap):
-            child_x = curr_x - new_offset
-            child_y = curr_y + vertical_offset
-            canvas.create_line(curr_x, curr_y + node_size, child_x, child_y - new_node_size, width=2)
-            q.put((left_child_index, child_x, child_y, level + 1, new_offset))
-
-        # Add right child to the queue
         right_child_index = 2 * index + 2
-        if right_child_index < len(heap):
-            child_x = curr_x + new_offset
-            child_y = curr_y + vertical_offset
-            canvas.create_line(curr_x, curr_y + node_size, child_x, child_y - new_node_size, width=2)
-            q.put((right_child_index, child_x, child_y, level + 1, new_offset))
 
-def draw_heap_dfs(canvas, heap, x, y, index=0, offset=250, level=0, node_size=30, color="lightblue", delay=0):
-    if index >= len(heap):
+        # Left child
+        if left_child_index < len(heap):
+            child_x = node_x - horizontal_spacing
+            child_y = node_y + vertical_spacing
+            queue.append((child_x, child_y, left_child_index, level + 1))
+            canvas.create_line(node_x, node_y + node_size, child_x, child_y - node_size, width=2)
+
+        # Right child
+        if right_child_index < len(heap):
+            child_x = node_x + horizontal_spacing
+            child_y = node_y + vertical_spacing
+            queue.append((child_x, child_y, right_child_index, level + 1))
+            canvas.create_line(node_x, node_y + node_size, child_x, child_y - node_size, width=2)
+
+        canvas.update()
+        time.sleep(delay / 1000)
+
+def draw_heap_dfs(canvas, heap, x, y, delay=500, index=0, level=0, max_levels=5, node_size=20):
+    if index >= len(heap) or level >= max_levels:
         return
 
     similarity, title = heap[index]
@@ -164,48 +140,30 @@ def draw_heap_dfs(canvas, heap, x, y, index=0, offset=250, level=0, node_size=30
     node_text = f"{title}\n({similarity:.2f})"
 
     # Draw the current node
-    canvas.create_oval(x - node_size, y - node_size, x + node_size, y + node_size,
-                       fill=color, outline="black", tags=f"node_{index}")
-
-    # Create the tooltip for the node
-    CreateToolTip(canvas, f"node_{index}", node_text, x, y)
-
-    # Ensure the canvas updates immediately after drawing the initial node
+    canvas.create_oval(
+        x - node_size, y - node_size, x + node_size, y + node_size,
+        fill="yellow", outline="black", tags=f"node_{index}"
+    )
     canvas.update()
+    time.sleep(delay / 1000)
 
-    vertical_offset = 60
-
-    # Calculate node size and offset dynamically based on level
-    new_node_size = max(5, node_size - 5)
-    new_offset = max((offset * 0.5 ** level) + (100 - (level * 40)), 10)
-
-    if level == 2:
-        new_offset -= 20
-    if level == 3:
-        new_offset += 15
-
-    # Draw the left child first
+    # Calculate child positions
+    node_spacing = (2 ** max_levels) * node_size
+    horizontal_spacing = node_spacing / (2 ** (level + 1))
+    vertical_spacing = 80
     left_child_index = 2 * index + 1
-    if left_child_index < len(heap):
-        child_x = x - new_offset
-        child_y = y + vertical_offset
-        canvas.create_line(x, y + node_size, child_x, child_y - new_node_size, width=2)
-        canvas.after(
-            delay + 2000,
-            partial(
-                draw_heap_dfs, canvas, heap, child_x, child_y, left_child_index, new_offset, level + 1, new_node_size, color, delay + 2000
-            )
-        )
-
-    # Draw the right child
     right_child_index = 2 * index + 2
+
+    # Traverse left 
+    if left_child_index < len(heap):
+        child_x = x - horizontal_spacing
+        child_y = y + vertical_spacing
+        canvas.create_line(x, y + node_size, child_x, child_y - node_size, width=2)
+        draw_heap_dfs(canvas, heap, child_x, child_y, delay, left_child_index, level + 1, max_levels, node_size)
+
+    # Traverse right 
     if right_child_index < len(heap):
-        child_x = x + new_offset
-        child_y = y + vertical_offset
-        canvas.create_line(x, y + node_size, child_x, child_y - new_node_size, width=2)
-        canvas.after(
-            delay + 4000,
-            partial(
-                draw_heap_dfs, canvas, heap, child_x, child_y, right_child_index, new_offset, level + 1, new_node_size, color, delay + 4000
-            )
-        )
+        child_x = x + horizontal_spacing
+        child_y = y + vertical_spacing
+        canvas.create_line(x, y + node_size, child_x, child_y - node_size, width=2)
+        draw_heap_dfs(canvas, heap, child_x, child_y, delay, right_child_index, level + 1, max_levels, node_size)

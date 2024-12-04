@@ -11,7 +11,7 @@ def get_max_heap(query, top_n):
 
 # Main GUI application
 def main():
-    max_heap = []  # Store the current heap globally for reuse
+    max_heap = []  
 
     def search_books():
         nonlocal max_heap
@@ -41,8 +41,7 @@ def main():
             return
 
         canvas.delete("all")
-        canvas_width = canvas.winfo_width()
-        draw_heap_dfs(canvas, max_heap, canvas_width // 2, 50)
+        draw_heap_dfs(canvas, max_heap, canvas.winfo_width() // 2, 50)
 
     def perform_bfs():
         if not max_heap:
@@ -50,8 +49,7 @@ def main():
             return
 
         canvas.delete("all")
-        canvas_width = canvas.winfo_width()
-        draw_heap_bfs(canvas, max_heap, canvas_width // 2, y=50, node_size=30, color="lightblue", delay=1000)
+        draw_heap_bfs(canvas, max_heap, canvas.winfo_width() // 2, 50)
 
     # Create the main tkinter window
     root = tk.Tk()
@@ -64,9 +62,9 @@ def main():
     query_entry.pack(pady=5)
 
     # Top N results input
-    top_n_label = tk.Label(root, text="Number of Top Results:")
+    top_n_label = tk.Label(root, text="Number of Top Results (Max 31):")
     top_n_label.pack(pady=5)
-    top_n_spinbox = tk.Spinbox(root, from_=1, to=50, width=5)
+    top_n_spinbox = tk.Spinbox(root, from_=1, to=31, width=5)
     top_n_spinbox.pack(pady=5)
 
     # Buttons frame
@@ -91,7 +89,6 @@ def main():
     tree.heading("Similarity", text="Similarity")
     tree.pack(pady=5, fill=tk.BOTH, expand=True)
 
-    # Canvas for heap visualization
     canvas = tk.Canvas(root, width=1000, height=600, bg="white")
     canvas.pack(pady=10, fill=tk.BOTH, expand=True)
 
