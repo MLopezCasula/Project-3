@@ -41,7 +41,8 @@ def main():
             return
 
         canvas.delete("all")
-        draw_heap_dfs(canvas, max_heap, canvas.winfo_width() // 2, 50)
+        canvas_width = canvas.winfo_width()
+        draw_heap_dfs(canvas, max_heap, canvas_width // 2, 50)
 
     def perform_bfs():
         if not max_heap:
@@ -49,7 +50,8 @@ def main():
             return
 
         canvas.delete("all")
-        draw_heap_bfs(canvas, max_heap, canvas.winfo_width() // 2, 50)
+        canvas_width = canvas.winfo_width()
+        draw_heap_bfs(canvas, max_heap, canvas_width // 2, y=50, node_size=30, color="lightblue", delay=1000)
 
     # Create the main tkinter window
     root = tk.Tk()
