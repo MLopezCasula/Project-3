@@ -7,7 +7,7 @@ file_path = 'data/BooksDataset.csv'
 data = pd.read_csv(file_path)
 
 
-# Clean and consolidate categories
+# Clean and consolidate categories 
 def clean_category(category):
     if pd.isna(category):
         return 'Uncategorized'
