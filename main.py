@@ -1,8 +1,17 @@
 import tkinter as tk
+import webbrowser
 from tkinter import ttk
 from data import find_similar_books
 from heap import create_max_heap, draw_heap, draw_heap_bfs, draw_heap_dfs
 
+# searches up the book when clicked in the table
+def open_google_search(tree, event):
+    selected_item = tree.selection()
+    if selected_item:
+        title = tree.item(selected_item, "values")[0]
+        # searches for the name + book
+        search_url = f"https://www.google.com/search?q={title} book"
+        webbrowser.open(search_url)
 
 # Function to create the max heap
 def get_max_heap(query, top_n):
@@ -89,7 +98,9 @@ def main():
     tree = ttk.Treeview(root, columns=("Title", "Similarity"), show="headings", height=5)
     tree.heading("Title", text="Title")
     tree.heading("Similarity", text="Similarity")
+    tree.bind("<ButtonRelease-1>", lambda event: open_google_search(tree, event))
     tree.pack(pady=5, fill=tk.BOTH, expand=True)
+
 
     # creates the canvas to display the heap
     canvas = tk.Canvas(root, width=1000, height=600, bg="white")
