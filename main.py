@@ -13,7 +13,7 @@ class AdvancedSearchFrame(ttk.LabelFrame):
         self.create_widgets()
 
     def create_widgets(self):
-        # Create the basic search bar frame
+        # Create the basic search bar frame 
         basic_frame = ttk.Frame(self)
         basic_frame.pack(fill=tk.X, pady=5)
 
