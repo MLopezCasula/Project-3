@@ -6,7 +6,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 file_path = 'data/BooksDataset.csv'
 data = pd.read_csv(file_path)
 
-#  Columns
+#  Creates the columns
 data['text'] = data[['Title', 'Authors', 'Description', 'Category']].fillna('').agg(' '.join, axis=1)
 
 # Compute TF-IDF matrix

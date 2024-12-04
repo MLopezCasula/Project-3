@@ -11,7 +11,7 @@ def get_max_heap(query, top_n):
 
 # Main GUI application
 def main():
-    max_heap = []  
+    max_heap = []
 
     def search_books():
         nonlocal max_heap
@@ -35,6 +35,7 @@ def main():
             similarity = -similarity
             tree.insert("", "end", values=(title, f"{similarity:.2f}"))
 
+    # does the dfs traversal heap when the dfs button is clicked
     def perform_dfs():
         if not max_heap:
             tree.insert("", "end", values=("No data to visualize", "N/A"))
@@ -43,6 +44,7 @@ def main():
         canvas.delete("all")
         draw_heap_dfs(canvas, max_heap, canvas.winfo_width() // 2, 50)
 
+    # does the bfs traversal heap when the bfs button is clicked
     def perform_bfs():
         if not max_heap:
             tree.insert("", "end", values=("No data to visualize", "N/A"))
@@ -89,12 +91,12 @@ def main():
     tree.heading("Similarity", text="Similarity")
     tree.pack(pady=5, fill=tk.BOTH, expand=True)
 
+    # creates the canvas to display the heap
     canvas = tk.Canvas(root, width=1000, height=600, bg="white")
     canvas.pack(pady=10, fill=tk.BOTH, expand=True)
 
     # Run the tkinter event loop
     root.mainloop()
-
 
 if __name__ == "__main__":
     main()
